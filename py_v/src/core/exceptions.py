@@ -23,3 +23,15 @@ class ConfigNotSupportTypeError(ConfigError):
 
 class ConfigMissingRequiredKeyError(ConfigError):
     pass
+
+
+class HTTPError(MainError):
+    pass
+
+
+class HTTPInvalidRequestError(HTTPError):
+    pass
+
+
+class HTTPRequestError(HTTPError):
+    pass

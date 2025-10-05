@@ -3,7 +3,11 @@ from pathlib import Path
 import pytest
 from yaml import safe_dump
 from py_v.src.core.config import Config
-from py_v.src.core.exceptions import ConfigNotSupportTypeError, ConfigNotFoundError, ConfigMissingRequiredKeyError
+from py_v.src.core.exceptions import (
+    ConfigNotSupportTypeError,
+    ConfigNotFoundError,
+    ConfigMissingRequiredKeyError
+)
 
 
 class TestConfigLoader:
@@ -12,7 +16,12 @@ class TestConfigLoader:
         data = {
             "listen": "127.0.0.1:8000",
             "upstreams": [{"host": "127.0.0.1", "port": 9000}],
-            "timeouts": {"connect_ms": 2000, "read_ms": 20000, "write_ms": 20000, "total_ms": 40000},
+            "timeouts": {
+                "connect_ms": 2000,
+                "read_ms": 20000,
+                "write_ms": 20000,
+                "total_ms": 40000
+            },
             "limits": {"max_client_conns": 2000, "max_conns_per_upstream": 200},
             "logging": {"level": "debug"},
         }
@@ -21,7 +30,7 @@ class TestConfigLoader:
 
         cfg = Config(file_path)
 
-        assert cfg.listen == "127.0.0.1:8000"
+        assert cfg.listen.host == "127.0.0.1"
         assert len(cfg.upstreams) == 1
         assert cfg.timeouts.connect_ms == 2000
         assert cfg.limits.max_client_conns == 2000
@@ -37,7 +46,7 @@ class TestConfigLoader:
 
         cfg = Config(file_path)
 
-        assert cfg.listen == "127.0.0.1:8000"
+        assert cfg.listen.host == "127.0.0.1"
         assert len(cfg.upstreams) == 1
         assert cfg.timeouts.connect_ms == Config.DEFAULTS["timeouts"]["connect_ms"]
         assert cfg.limits.max_client_conns == Config.DEFAULTS["limits"]["max_client_conns"]

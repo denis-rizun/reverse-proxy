@@ -12,7 +12,7 @@ from py_v.src.core.exceptions import (
 from py_v.src.dtos.limit import LimitsDTO
 from py_v.src.dtos.logging import LoggingDTO
 from py_v.src.dtos.timeout import TimeoutsDTO
-from py_v.src.dtos.upstream import UpstreamDTO
+from py_v.src.dtos.address import AddressDTO
 
 
 class Config:
@@ -39,8 +39,8 @@ class Config:
 
     def load(self) -> None:
         storage = self._read()
-        self.listen = storage["listen"]
-        self.upstreams = [UpstreamDTO(stream) for stream in storage["upstreams"]]
+        self.listen = AddressDTO(storage["listen"].split(":"))
+        self.upstreams = [AddressDTO(stream) for stream in storage["upstreams"]]
         self.timeouts = TimeoutsDTO(storage["timeouts"])
         self.limits = LimitsDTO(storage["limits"])
         self.logging = LoggingDTO(storage["logging"])

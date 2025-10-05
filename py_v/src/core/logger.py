@@ -14,8 +14,8 @@ class Logger:
     }
 
     @classmethod
-    def setup(cls, name: str = __name__, level: str = "info") -> logging.Logger:
-        logger = logging.getLogger(name)
+    def setup(cls, level: str = "info") -> logging.Logger:
+        logger = logging.getLogger(__name__)
 
         if logger.hasHandlers():
             logger.handlers.clear()
