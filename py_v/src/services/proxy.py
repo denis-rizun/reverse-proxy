@@ -35,28 +35,46 @@ class Proxy:
         request_metadata = f"{request.method} {request.path} {request.version}"
         upstream, global_sem, up_sem = await self._balancer.acquire_next()
 
-        async with global_sem, up_sem:
-            up_writer = None
-            try:
-                up_reader, up_writer = await self._connect_to_upstream(upstream)
+        acquired_global = (
+            global_sem.acquire_nowait()
+            if hasattr(global_sem, "acquire_nowait")
+            else None
+        )
+        acquired_up = (
+            up_sem.acquire_nowait()
+            if hasattr(up_sem, "acquire_nowait")
+            else None
+        )
 
-                timer.mark("start_forward")
-                await self._forward_headers(f"{request_metadata}\r\n", up_writer, request)
-                await self._forward_body(request.headers, r, up_writer)
-                timer.mark("end_forward")
+        if acquired_global is False or acquired_up is False:
+            raise HTTPRequestError("503 Service Unavailable")
 
-                timer.mark("start_ttfb")
-                first_chunk = await up_reader.read(1)
-                timer.mark("end_ttfb")
+        try:
+            async with global_sem, up_sem:
+                up_writer = None
+                try:
+                    up_reader, up_writer = await self._connect_to_upstream(upstream)
 
-                timer.mark("start_stream")
-                _ = create_task(self._stream_response(up_reader, w, first_chunk))
-                timer.mark("end_stream")
+                    timer.mark("start_forward")
+                    await self._forward_headers(f"{request_metadata}\r\n", up_writer, request)
+                    await self._forward_body(request.headers, r, up_writer)
+                    timer.mark("end_forward")
 
-            finally:
-                if up_writer:
-                    up_writer.close()
-                    await up_writer.wait_closed()
+                    timer.mark("start_ttfb")
+                    first_chunk = await up_reader.read(1)
+                    timer.mark("end_ttfb")
+
+                    timer.mark("start_stream")
+                    _ = create_task(self._stream_response(up_reader, w, first_chunk))
+                    timer.mark("end_stream")
+
+                finally:
+                    if up_writer:
+                        up_writer.close()
+                        await up_writer.wait_closed()
+
+        except TimeoutError as e:
+            raise HTTPRequestError("503 Service Unavailable") from e
 
         self._log_response_time(request_metadata, upstream, timer)
         return True
