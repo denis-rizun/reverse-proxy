@@ -4,18 +4,20 @@ from typing import Any
 
 from yaml import safe_load
 
-from py_v.src.core.exceptions import (
+from src.core.config import Config
+from src.domain.entities.address import AddressDTO
+from src.domain.entities.health import HealthDTO
+from src.domain.entities.limit import LimitsDTO
+from src.domain.entities.rate import RateLimitDTO
+from src.domain.entities.timeout import TimeoutsDTO
+from src.core.exceptions import (
     ConfigNotFoundError,
     ConfigNotSupportTypeError,
     ConfigMissingRequiredKeyError
 )
-from py_v.src.dtos.limit import LimitsDTO
-from py_v.src.dtos.logging import LoggingDTO
-from py_v.src.dtos.timeout import TimeoutsDTO
-from py_v.src.dtos.address import AddressDTO
 
 
-class Config:
+class ConfigLoader:
     REQUIRED_KEYS = ["listen", "upstreams"]
     DEFAULTS = {
         "timeouts": {
@@ -26,24 +28,24 @@ class Config:
         },
         "limits": {"max_client_conns": 1000, "max_conns_per_upstream": 100},
         "logging": {"level": "info"},
+        "rate_limits": {"rate": 100, "capacity": 1000, "per_upstream": False},
+        "health_check": {"interval": 100, "timeout": 5},
     }
 
     def __init__(self, path: str | Path) -> None:
         self.path = Path(path)
-        self.listen = None
-        self.upstreams = None
-        self.timeouts = None
-        self.limits = None
-        self.logging = None
-        self.load()
 
-    def load(self) -> None:
+    def load(self) -> Config:
         storage = self._read()
-        self.listen = AddressDTO(storage["listen"].split(":"))
-        self.upstreams = [AddressDTO(stream) for stream in storage["upstreams"]]
-        self.timeouts = TimeoutsDTO(storage["timeouts"])
-        self.limits = LimitsDTO(storage["limits"])
-        self.logging = LoggingDTO(storage["logging"])
+        return Config(
+            listen=AddressDTO(storage["listen"][0]),
+            upstreams=[AddressDTO(stream) for stream in storage["upstreams"]],
+            timeouts=TimeoutsDTO(storage["timeouts"]),
+            limits=LimitsDTO(storage["limits"]),
+            logging_level=storage["logging"],
+            rate_limits=RateLimitDTO(storage["rate_limits"]),
+            health=HealthDTO(storage["health_check"]),
+        )
 
     def _read(self) -> dict[str, Any]:
         if not self.path.exists():

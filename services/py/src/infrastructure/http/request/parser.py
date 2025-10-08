@@ -1,18 +1,17 @@
-from asyncio import StreamReader
-
-from py_v.src.core.exceptions import HTTPInvalidRequestError
-from py_v.src.dtos.request import RequestDTO
+from src.core.exceptions import HTTPInvalidRequestError
+from src.domain.entities.request import RequestDTO
+from src.infrastructure.http.network.stream import Stream
 
 
 class RequestParser:
 
-    async def receive_request(self, reader: StreamReader) -> RequestDTO:
-        request_line = await reader.readline()
+    async def receive_request(self, client: Stream) -> RequestDTO:
+        request_line = await client.readline()
         if not request_line:
             return RequestDTO(None, None, None, None)
 
         method, path, version = self._decode_request_line(request_line)
-        headers = await self._decode_headers(reader)
+        headers = await self._decode_headers(client)
 
         return RequestDTO(method, path, version, headers)
 
@@ -26,10 +25,10 @@ class RequestParser:
         return parts
 
     @staticmethod
-    async def _decode_headers(reader: StreamReader) -> dict[str, str]:
+    async def _decode_headers(client: Stream) -> dict[str, str]:
         headers = {}
         while True:
-            line = await reader.readline()
+            line = await client.readline()
             if not line:
                 break
 

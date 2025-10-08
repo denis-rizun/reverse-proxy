@@ -1,4 +1,6 @@
-listen: "127.0.0.1:8000"
+listen:
+  - host: "127.0.0.1"
+    port: 8000
 upstreams:
   - host: "127.0.0.1"
     port: 9001

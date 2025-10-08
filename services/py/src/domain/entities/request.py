@@ -13,3 +13,6 @@ class RequestDTO:
         self.path = path
         self.version = version
         self.headers = headers
+
+    def build_line(self) -> str:
+        return f"{self.method} {self.path} {self.version}"

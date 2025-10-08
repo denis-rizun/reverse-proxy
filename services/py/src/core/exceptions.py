@@ -1,6 +1,6 @@
-from py_v.src.core.logger import Logger
+from src.core.logger import Logger
 
-logger = Logger.setup(__name__)
+logger = Logger.setup()
 
 
 class MainError(Exception):
