@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from time import perf_counter
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from src.core.logger import Logger
 from src.domain.entities.address import AddressDTO

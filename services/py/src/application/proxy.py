@@ -45,27 +45,32 @@ class Proxy:
             if not request.method:
                 return False
 
-        upstream, global_sem, up_sem = await self._balancer.acquire_next()
-        if global_sem._value <= 0 or up_sem._value <= 0:
-            raise HTTPRequestError("503 Service Unavailable")
+        for _ in range(len(self._balancer.upstreams)):
+            upstream, global_sem, up_sem = await self._balancer.acquire_next()
 
-        try:
-            async with global_sem, up_sem:
-                up_stream = await self._connector.connect(upstream)
+            if global_sem._value <= 0 or up_sem._value <= 0:  # noqa
+                continue
 
-                async with timer.timed("st_forward", "end_forward"):
-                    await HttpForwarder.forward(request, client, up_stream, client_ip)
+            try:
+                async with global_sem, up_sem:
+                    up_stream = await self._connector.connect(upstream)
 
-                async with timer.timed("st_ttfb", "end_ttfb"):
-                    first_chunk = await up_stream.read(1)
+                    async with timer.timed("st_forward", "end_forward"):
+                        await HttpForwarder.forward(request, client, up_stream, client_ip)
 
-                asyncio.create_task(client.stream_from(up_stream, first_chunk))
+                    async with timer.timed("st_ttfb", "end_ttfb"):
+                        first_chunk = await up_stream.read(1)
 
-        except TimeoutError:
-            raise HTTPRequestError("503 Service Unavailable")
+                    asyncio.create_task(client.stream_from(up_stream, first_chunk))
 
-        timer.log_time(request.build_line(), upstream)
-        return True
+                timer.log_time(request.build_line(), upstream)
+                return True
+
+            except (TimeoutError, OSError):
+                logger.warning("Upstream %s failed, trying next...", upstream)
+                continue
+
+        raise HTTPRequestError("503 Service Unavailable")
 
     async def _check_limits(self, client: Stream) -> tuple[str, bool]:
         client_ip = client.get_client_ip()

@@ -18,7 +18,9 @@ async def metrics_page() -> HTMLResponse:
 
     html += "<h3>Upstream Status:</h3><ul>"
     for up, status in metrics_storage.upstream_status.items():
-        html += f"<li>{up}: {status} (slots: {metrics_storage.upstream_semaphores_count.get(up, 0)})</li>"
+        html += f"<li>{up}: {status} (slots: {
+            metrics_storage.upstream_semaphores_count.get(up, 0)
+        })</li>"
     html += "</ul>"
 
     html += f"<p>Global Semaphore Slots: {metrics_storage.global_semaphore_count}</p>"

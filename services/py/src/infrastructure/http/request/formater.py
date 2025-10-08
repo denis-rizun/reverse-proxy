@@ -10,7 +10,7 @@ class RequestFormatter:
     }
 
     @classmethod
-    def format_headers(cls, rq: RequestDTO, client_ip: str = None) -> dict[str, Any]:
+    def format_headers(cls, rq: RequestDTO, client_ip: str) -> dict[str, Any]:
         headers = dict(rq.headers)
         if client_ip:
             if "x-forwarded-for" in headers:
@@ -18,7 +18,7 @@ class RequestFormatter:
             else:
                 headers["x-forwarded-for"] = client_ip
 
-        via = f"1.1 my-proxy"
+        via = "1.1 my-proxy"
         if "via" in headers:
             headers["via"] += f", {via}"
         else:

@@ -18,6 +18,6 @@ class HttpConnector:
                 timeout=self._cfg.timeouts.connect_ms
             )
             return Stream(r, w)
-        except TimeoutError:
+        except (TimeoutError, ConnectionRefusedError):
             self._balancer.report_failure(addr)
             raise
