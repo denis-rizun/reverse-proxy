@@ -1,0 +1,8 @@
+services:
+  py-version:
+    build:
+      context: .
+      dockerfile: services/py/Dockerfile
+    ports:
+      - "8000:8000"
+      - "8007:8007"

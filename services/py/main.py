@@ -3,7 +3,7 @@ from pathlib import Path
 
 from src.infrastructure.di.bootstrap import Bootstrap
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 
 
 async def main() -> None:

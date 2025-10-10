@@ -29,15 +29,14 @@ class Proxy:
         self._balancer = balancer
         self._limiter = limiter
         self._connector = connector
-        self.metrics = metrics_storage
 
     async def handle_request(self, client: Stream) -> bool:
         client_ip, allowed = await self._check_limits(client)
         if not allowed:
             return False
 
-        self.metrics.total_requests += 1
-        self.metrics.requests_per_ip[client_ip] += 1
+        metrics_storage.total_requests += 1
+        metrics_storage.requests_per_ip[client_ip] += 1
         timer = Timer.get_timer()
 
         async with timer.timed("st_read", "end_read"):

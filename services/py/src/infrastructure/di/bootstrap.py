@@ -37,6 +37,6 @@ class Bootstrap:
     async def _run_metrics_server() -> None:
         app = FastAPI()
         app.include_router(router)
-        config = uvicorn.Config(app, port=7000, log_level="error")
+        config = uvicorn.Config(app, host="0.0.0.0", port=8007, log_level="error")
         srv = uvicorn.Server(config)
         await srv.serve()
