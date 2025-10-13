@@ -1,4 +1,4 @@
-from asyncio import StreamReader, StreamWriter
+from asyncio import StreamReader, StreamWriter, Task
 
 from src.core.exceptions import HTTPRequestError
 
@@ -7,6 +7,11 @@ class Stream:
     def __init__(self, reader: StreamReader, writer: StreamWriter) -> None:
         self.reader = reader
         self.writer = writer
+        self._stream_tasks = set()
+
+    def track_task(self, task: Task) -> None:
+        self._stream_tasks.add(task)
+        task.add_done_callback(lambda t: self._stream_tasks.discard(t))
 
     def get_client_ip(self) -> str:
         peername = self.writer.get_extra_info("peername")

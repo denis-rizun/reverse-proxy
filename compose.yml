@@ -1,8 +1,17 @@
 services:
-  py-version:
+  py-v:
     build:
       context: .
       dockerfile: services/py/Dockerfile
+    container_name: py-v
     ports:
       - "8000:8000"
       - "8007:8007"
+#  go-v:
+#    build:
+#      context: .
+#      dockerfile: services/go/Dockerfile
+#    container_name: go-v
+#    ports:
+#      - "8000:8000"
+#      - "9090:9090"

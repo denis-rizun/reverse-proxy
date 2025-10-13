@@ -6,7 +6,6 @@ from src.core.config import Config
 from src.core.exceptions import HTTPRequestError
 from src.core.logger import Logger
 from src.core.timer import Timer
-from src.domain.entities.metrics import metrics_storage
 from src.infrastructure.http.network.connector import HttpConnector
 from src.infrastructure.http.network.forwarder import HttpForwarder
 from src.infrastructure.http.network.stream import Stream
@@ -35,8 +34,6 @@ class Proxy:
         if not allowed:
             return False
 
-        metrics_storage.total_requests += 1
-        metrics_storage.requests_per_ip[client_ip] += 1
         timer = Timer.get_timer()
 
         async with timer.timed("st_read", "end_read"):
@@ -60,7 +57,8 @@ class Proxy:
                     async with timer.timed("st_ttfb", "end_ttfb"):
                         first_chunk = await up_stream.read(1)
 
-                    asyncio.create_task(client.stream_from(up_stream, first_chunk))
+                    stream_task = asyncio.create_task(client.stream_from(up_stream, first_chunk))
+                    client.track_task(stream_task)
 
                 timer.log_time(request.build_line(), upstream)
                 return True

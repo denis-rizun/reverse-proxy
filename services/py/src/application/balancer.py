@@ -5,7 +5,6 @@ from itertools import cycle
 from src.core.config import Config
 from src.core.exceptions import HTTPRequestError
 from src.domain.entities.address import AddressDTO
-from src.domain.entities.metrics import metrics_storage
 from src.domain.enums.address import HealthStatusEnum
 
 
@@ -37,10 +36,6 @@ class LoadBalancer:
                 key = f"{upstream.host}:{upstream.port}"
                 up_sem = self._upstream_semaphores[key]
                 open_until = self._circuit_open_until[key]
-
-                metrics_storage.upstream_status[key] = upstream.status.value
-                metrics_storage.upstream_semaphores_count[key] = up_sem._value
-                metrics_storage.global_semaphore_count = self._global_semaphore._value
 
                 if (
                     upstream.status == HealthStatusEnum.DOWN
