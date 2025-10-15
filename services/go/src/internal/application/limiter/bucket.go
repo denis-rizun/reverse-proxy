@@ -6,35 +6,37 @@ import (
 )
 
 type TokenBucket struct {
-	rate     float64
-	capacity float64
+	mu       sync.RWMutex
 	tokens   float64
 	last     time.Time
-	mu       sync.Mutex
+	rate     float64
+	capacity float64
 }
 
 func NewTokenBucket(rate, capacity float64) *TokenBucket {
 	return &TokenBucket{
-		rate:     rate,
-		capacity: capacity,
 		tokens:   capacity,
 		last:     time.Now(),
+		rate:     rate,
+		capacity: capacity,
 	}
 }
 
-func (b *TokenBucket) Consume(n float64) bool {
+func (b *TokenBucket) Allow() bool {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	now := time.Now()
-	elapsed := now.Sub(b.last).Seconds()
-	b.last = now
+
+	elapsed := time.Since(b.last).Seconds()
 	b.tokens += elapsed * b.rate
 	if b.tokens > b.capacity {
 		b.tokens = b.capacity
 	}
-	if b.tokens >= n {
-		b.tokens -= n
-		return true
+	b.last = time.Now()
+
+	if b.tokens < 1 {
+		return false
 	}
-	return false
+
+	b.tokens -= 1
+	return true
 }
